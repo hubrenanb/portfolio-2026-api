@@ -1,12 +1,12 @@
-# --- ETAPA 1: BUILD (Compilação) ---
-FROM maven:3.8.5-openjdk-17 AS build
+# --- ETAPA 1: BUILD (Compilação) Java 21 ---
+
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
 # --- ETAPA 2: RUN (Execução) ---
-# MUDANÇA AQUI: Trocamos a imagem antiga pela Eclipse Temurin (mais estável e leve)
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 
 # Copia o .jar gerado na etapa anterior
