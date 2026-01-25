@@ -3,17 +3,13 @@ package com.renan.profile.core_api.controller;
 import com.renan.profile.core_api.model.Project;
 import com.renan.profile.core_api.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -22,16 +18,6 @@ public class ProjectController {
 
     @Autowired
     private ProjectRepository projectRepository;
-
-    private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
-
-    public ProjectController() {
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("Não foi possível criar o diretório de uploads.", ex);
-        }
-    }
 
     @GetMapping
     public List<Project> getAllProjects() {
@@ -44,7 +30,7 @@ public class ProjectController {
             @RequestParam("description") String description,
             @RequestParam(value = "tags", required = false) String tags,
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "link", required = false) String link, // NOVO
+            @RequestParam(value = "link", required = false) String link,
             @RequestParam(value = "file", required = false) MultipartFile file
     ) throws IOException {
         
@@ -53,13 +39,14 @@ public class ProjectController {
         project.setDescription(description);
         project.setTags(tags);
         project.setStatus(status);
-        project.setLink(link); // SALVANDO LINK
+        project.setLink(link);
 
-        if (file != null) {
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            project.setImageUrl("http://localhost:8080/uploads/" + fileName);
+       
+        if (file != null && !file.isEmpty()) {
+            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
+            // Adiciona o prefixo para o navegador entender que é uma imagem
+            String imageString = "data:" + file.getContentType() + ";base64," + base64Image;
+            project.setImageUrl(imageString);
         }
 
         return projectRepository.save(project);
@@ -72,7 +59,7 @@ public class ProjectController {
             @RequestParam("description") String description,
             @RequestParam(value = "tags", required = false) String tags,
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "link", required = false) String link, // NOVO
+            @RequestParam(value = "link", required = false) String link,
             @RequestParam(value = "file", required = false) MultipartFile file
     ) throws IOException {
         
@@ -82,16 +69,15 @@ public class ProjectController {
                     project.setDescription(description);
                     project.setTags(tags);
                     project.setStatus(status);
-                    project.setLink(link); // ATUALIZANDO LINK
+                    project.setLink(link);
 
-                    if (file != null) {
+                    if (file != null && !file.isEmpty()) {
                         try {
-                            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-                            Path targetLocation = this.fileStorageLocation.resolve(fileName);
-                            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                            project.setImageUrl("http://localhost:8080/uploads/" + fileName);
+                            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
+                            String imageString = "data:" + file.getContentType() + ";base64," + base64Image;
+                            project.setImageUrl(imageString);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            throw new RuntimeException("Erro ao processar imagem", e);
                         }
                     }
                     return ResponseEntity.ok(projectRepository.save(project));

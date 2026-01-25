@@ -11,17 +11,17 @@ public class Project {
 
     private String title;
     
-    // MUDANÇA: columnDefinition = "TEXT" permite textos gigantes (sem limite de 255)
     @Column(columnDefinition = "TEXT") 
     private String description;
     
+    
+    @Column(columnDefinition = "TEXT") 
     private String imageUrl;
     
-    private String tags;   // Ex: "Java, React, SQL"
-    private String status; // Ex: "Concluído", "Em Desenvolvimento"
+    private String tags;   
+    private String status; 
     
-    // --- NOVO CAMPO ---
-    private String link;   // Ex: "https://github.com/usuario/projeto"
+    private String link;   
     
     // --- GETTERS E SETTERS ---
     
@@ -43,7 +43,6 @@ public class Project {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    // Getter e Setter do Link
     public String getLink() { return link; }
     public void setLink(String link) { this.link = link; }
 }
