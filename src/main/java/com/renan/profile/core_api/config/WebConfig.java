@@ -11,12 +11,11 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
-                    "http://localhost:5173",                    // Ambiente local
+                    "http://localhost:5173",                    // Seu ambiente local
                     "https://portfolio-2026-front.vercel.app",  // Link da Vercel
                     "https://www.renanbernardo.com.br",         // Seu domínio oficial
                     "https://renanbernardo.com.br"              // Domínio sem www
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT");
     }
-    
-   
+}
