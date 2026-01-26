@@ -1,14 +1,13 @@
 package com.renan.profile.core_api.controller;
 
 import com.renan.profile.core_api.model.Project;
-import com.renan.profile.core_api.repository.ProjectRepository;
+import com.renan.profile.core_api.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -17,15 +16,15 @@ import java.util.List;
 public class ProjectController {
 
     @Autowired
-    private ProjectRepository projectRepository;
+    private ProjectService projectService; // Agora usamos o Service, não o Repository
 
     @GetMapping
     public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+        return projectService.findAllProjects();
     }
 
     @PostMapping
-    public Project createProject(
+    public ResponseEntity<Project> createProject(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam(value = "tags", required = false) String tags,
@@ -41,15 +40,8 @@ public class ProjectController {
         project.setStatus(status);
         project.setLink(link);
 
-       
-        if (file != null && !file.isEmpty()) {
-            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-            // Adiciona o prefixo para o navegador entender que é uma imagem
-            String imageString = "data:" + file.getContentType() + ";base64," + base64Image;
-            project.setImageUrl(imageString);
-        }
-
-        return projectRepository.save(project);
+        Project savedProject = projectService.saveOrUpdateProject(project, file);
+        return ResponseEntity.ok(savedProject);
     }
 
     @PutMapping("/{id}")
@@ -63,35 +55,25 @@ public class ProjectController {
             @RequestParam(value = "file", required = false) MultipartFile file
     ) throws IOException {
         
-        return projectRepository.findById(id)
-                .map(project -> {
-                    project.setTitle(title);
-                    project.setDescription(description);
-                    project.setTags(tags);
-                    project.setStatus(status);
-                    project.setLink(link);
+        // Busca o projeto existente primeiro
+        Project existingProject = projectService.findById(id);
 
-                    if (file != null && !file.isEmpty()) {
-                        try {
-                            String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
-                            String imageString = "data:" + file.getContentType() + ";base64," + base64Image;
-                            project.setImageUrl(imageString);
-                        } catch (IOException e) {
-                            throw new RuntimeException("Erro ao processar imagem", e);
-                        }
-                    }
-                    return ResponseEntity.ok(projectRepository.save(project));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        // Atualiza os dados
+        existingProject.setTitle(title);
+        existingProject.setDescription(description);
+        existingProject.setTags(tags);
+        existingProject.setStatus(status);
+        existingProject.setLink(link);
+
+        // O Service decide se atualiza a imagem ou mantém a antiga (se file for null)
+        Project updatedProject = projectService.saveOrUpdateProject(existingProject, file);
+        
+        return ResponseEntity.ok(updatedProject);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteProject(@PathVariable Long id) {
-        return projectRepository.findById(id)
-                .map(project -> {
-                    projectRepository.delete(project);
-                    return ResponseEntity.noContent().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
+        projectService.deleteProject(id);
+        return ResponseEntity.noContent().build();
     }
 }
