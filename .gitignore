@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# --- DOCKER & ENV ---
+.env
+docker-compose.override.yml
+*.log
